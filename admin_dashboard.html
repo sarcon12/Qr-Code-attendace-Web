@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+    font-family:Arial, sans-serif;
+    margin:0;
+    background:linear-gradient(135deg,#a8edea,#fed6e3);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding-top:50px;
+    box-sizing:border-box;
+}
+body {
+    background-image: url('1.png');
+    background-size: cover; /* Makes image cover the whole area */
+    background-repeat: no-repeat; /* Prevents repeating */
+    background-position: center; /* Centers the image */
+}
+.container{
+    background:white;
+    padding:30px 20px;
+    border-radius:10px;
+    width:100%;
+    max-width:700px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+    text-align:center;
+    box-sizing:border-box;
+}
+button, select{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border:none;
+    background:#4CAF50;
+    color:white;
+    font-size:16px;
+    border-radius:5px;
+    cursor:pointer;
+    box-sizing:border-box;
+}
+button:hover, select:hover{
+    background:#45a049;
+}
+table{
+    width:100%;
+    margin-top:20px;
+    border-collapse:collapse;
+    table-layout:fixed;
+    word-wrap:break-word;
+}
+th, td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+th{
+    background:#4CAF50;
+    color:white;
+}
+.filter-container{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+}
+.filter-container select{
+    flex:1;
+    min-width:100px;
+}
+.delete-btn{
+    background:#f44336;
+    color:white;
+    border:none;
+    padding:5px 10px;
+    border-radius:5px;
+    cursor:pointer;
+}
+.delete-btn:hover{
+    background:#d32f2f;
+}
+@media screen and (max-width:480px){
+    .filter-container{flex-direction:column;}
+    button, select{font-size:14px;padding:10px;}
+    table th, table td{padding:6px;font-size:14px;}
+    .container{padding:20px 15px;}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h2>Admin Dashboard</h2>
+<button onclick="window.location.href='scan_qr.htm'">Scan QR Code</button>
+<button onclick="window.location.href='attendance_report.html'">View Attendance Report</button>
+<button onclick="logout()">Logout</button>
+<button style="background:#f57c00;" onclick="deleteAllStudents()">Delete All Students</button>
+
+<div class="filter-container">
+<select id="filterYear" onchange="showStudents()">
+    <option value="">All Years</option>
+    <option value="1">1st Year</option>
+    <option value="2">2nd Year</option>
+    <option value="3">3rd Year</option>
+    <option value="4">4th Year</option>
+</select>
+<select id="filterSection" onchange="showStudents()">
+    <option value="">All Sections</option>
+</select>
+</div>
+
+<table id="studentTable">
+<tr>
+<th>Name</th>
+<th>Course</th>
+<th>Year</th>
+<th>Section</th>
+<th>Phone</th>
+<th>Action</th>
+</tr>
+</table>
+</div>
+
+<script>
+function populateSections(){
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+    let filterYear = document.getElementById("filterYear").value;
+    let sectionSelect = document.getElementById("filterSection");
+    sectionSelect.innerHTML = '<option value="">All Sections</option>';
+    let sections = new Set();
+    students.forEach(s=>{
+        if(filterYear==="" || s.year===filterYear){
+            sections.add(s.section);
+        }
+    });
+    Array.from(sections).sort().forEach(sec=>{
+        sectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`;
+    });
+}
+
+function goScan(){
+    window.location="scan_qr.html";
+}
+
+function viewAttendance(){
+    window.location="attendance_report.html";
+}
+
+function deleteStudent(username){
+    if(confirm("Are you sure you want to delete this student?")){
+        let students = JSON.parse(localStorage.getItem("students")) || [];
+        students = students.filter(s => s.username !== username);
+        localStorage.setItem("students", JSON.stringify(students));
+
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        users = users.filter(u => u.username !== username);
+        localStorage.setItem("users", JSON.stringify(users));
+
+        showStudents();
+        alert("Student deleted successfully!");
+    }
+}
+
+function deleteAllStudents(){
+    if(confirm("Are you sure you want to delete ALL students? This cannot be undone!")){
+        localStorage.removeItem("students");
+
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        users = users.filter(u => u.role !== "student");
+        localStorage.setItem("users", JSON.stringify(users));
+
+        showStudents();
+        alert("All students deleted successfully!");
+    }
+}
+
+function showStudents(){
+    let students=JSON.parse(localStorage.getItem("students"))||[];
+    let table=document.getElementById("studentTable");
+    table.innerHTML="<tr><th>Name</th><th>Course</th><th>Year</th><th>Section</th><th>Phone</th><th>Action</th></tr>";
+    let filterYear = document.getElementById("filterYear").value;
+    let filterSection = document.getElementById("filterSection").value;
+    populateSections();
+    students.forEach(s=>{
+        if((filterYear==="" || s.year===filterYear) &&
+           (filterSection==="" || s.section===filterSection)){
+            let row=table.insertRow();
+            row.insertCell(0).innerHTML=s.name;
+            row.insertCell(1).innerHTML=s.course;
+            row.insertCell(2).innerHTML=s.year;
+            row.insertCell(3).innerHTML=s.section;
+            row.insertCell(4).innerHTML=s.phone;
+            row.insertCell(5).innerHTML=`<button class="delete-btn" onclick="deleteStudent('${s.username}')">Delete</button>`;
+        }
+    });
+}
+
+function logout(){
+    window.location="index.html";
+}
+
+showStudents();
+</script>
+</body>
+</html>

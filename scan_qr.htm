@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Scan QR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+body{ font-family:Arial,sans-serif; text-align:center; background: linear-gradient(135deg,#a8edea,#fed6e3); min-height:100vh; margin:0; padding:20px; }
+#reader{ width:100%; max-width:350px; margin:20px auto; }
+.back-btn{ margin-top:20px; display:inline-block; padding:10px 15px; background:#f44336; color:white; text-decoration:none; border-radius:6px; }
+.back-btn:hover{ background:#d32f2f; }
+#cameraOverlay{ position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); color:white; display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:1000; font-size:18px; padding:20px; display:none; }
+#cameraOverlay button{ margin-top:15px; padding:10px 20px; background:#4CAF50; border:none; color:white; border-radius:6px; cursor:pointer; font-size:16px; }
+#cameraOverlay button:hover{ background:#45a049; }
+body {
+    background-image: url('1.png');
+    background-size: cover; /* Makes image cover the whole area */
+    background-repeat: no-repeat; /* Prevents repeating */
+    background-position: center; /* Centers the image */
+}
+</style>
+</head>
+<body>
+
+<h2>Scan Student QR</h2>
+<div id="reader"></div>
+<a href="admin_dashboard.html" class="back-btn">⬅ Logout</a>
+
+<div id="cameraOverlay">
+    <p>📷 Please allow camera access to scan QR codes.</p>
+    <button onclick="startScanner()">Try Again</button>
+</div>
+
+<script>
+let scanner;
+
+// Show/hide overlay
+function showCameraOverlay(){ document.getElementById("cameraOverlay").style.display="flex"; }
+function hideCameraOverlay(){ document.getElementById("cameraOverlay").style.display="none"; }
+
+// Save attendance
+function saveAttendance(studentData){
+    let records = JSON.parse(localStorage.getItem("attendance")) || [];
+    let now = new Date();
+    let today = now.toLocaleDateString();
+    if(!records.some(r => r.student === studentData.name && r.date === today)){
+        records.push({
+            student: studentData.name,
+            year: studentData.year,
+            section: studentData.section,
+            date: today,
+            time: now.toLocaleTimeString()
+        });
+        localStorage.setItem("attendance", JSON.stringify(records));
+    }
+}
+
+// When QR scanned
+function onScanSuccess(scannedText){
+    scannedText = scannedText.trim();
+    let students = JSON.parse(localStorage.getItem("students")) || [];
+    let studentData = students.find(s => s.id === scannedText);
+    if(studentData){
+        saveAttendance(studentData);
+        alert(`✅ Attendance saved for ${studentData.name}`);
+        window.location = "attendance_report.html";
+    } else {
+        alert("❌ Student not found!");
+    }
+}
+
+// Start scanner
+function startScanner(){
+    hideCameraOverlay();
+    try{
+        scanner = new Html5QrcodeScanner("reader",{fps:10, qrbox:250});
+        scanner.render(onScanSuccess);
+    }catch(err){
+        console.error(err);
+        showCameraOverlay();
+    }
+}
+
+// Auto start
+startScanner();
+</script>
+
+</body>
+</html>

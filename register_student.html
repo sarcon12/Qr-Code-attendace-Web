@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Register Student</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+    font-family:Arial, sans-serif;
+    background: linear-gradient(135deg,#a8edea,#fed6e3);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+    padding:10px;
+    box-sizing:border-box;
+}
+body {
+    background-image: url('1.png');
+    background-size: cover; /* Makes image cover the whole area */
+    background-repeat: no-repeat; /* Prevents repeating */
+    background-position: center; /* Centers the image */
+}
+.box{
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    width:100%;
+    max-width:350px;
+    text-align:center;
+    box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+input, select{
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:5px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
+button{
+    width:100%;
+    padding:12px;
+    background:#4CAF50;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-top:10px;
+    font-size:16px;
+}
+button:hover{
+    background:#45a049;
+}
+.back-btn{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#f44336;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+.back-btn:hover{
+    background:#d32f2f;
+}
+#message{
+    margin-top:10px;
+    padding:10px;
+    border-radius:5px;
+    display:none;
+    font-weight:bold;
+}
+.success{
+    background:#d4edda;
+    color:#155724;
+    border:1px solid #c3e6cb;
+}
+.error{
+    background:#f8d7da;
+    color:#721c24;
+    border:1px solid #f5c6cb;
+}
+@media screen and (max-width:480px){
+    .box{padding:20px;}
+    input, select, button, .back-btn{padding:10px; font-size:14px;}
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h2>Register Student</h2>
+
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<input id="name" placeholder="Student Name">
+
+<select id="course" onchange="updateYear()">
+    <option value="">Select Course</option>
+    <option value="ACT">ACT</option>
+    <option value="BSIS">BSIS</option>
+    <option value="BEPED">BEPED</option>
+</select>
+
+<select id="year">
+    <option value="">Select Year</option>
+</select>
+
+<input id="section" placeholder="Section">
+<input id="phone" placeholder="Phone Number">
+
+<button onclick="registerStudent()">Register</button>
+<button class="back-btn" onclick="backToLogin()">Back to Login</button>
+
+<div id="message"></div>
+</div>
+
+<script>
+function updateYear(){
+    let course=document.getElementById("course").value;
+    let year=document.getElementById("year");
+    year.innerHTML='<option value="">Select Year</option>';
+    if(course==="ACT"){year.innerHTML+='<option value="1">1st Year</option><option value="2">2nd Year</option>';}
+    if(course==="BSIS"){year.innerHTML+='<option value="3">3rd Year</option><option value="4">4th Year</option>';}
+    if(course==="BEPED"){year.innerHTML+='<option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option>';}
+}
+
+function registerStudent(){
+    let username=document.getElementById("username").value.trim();
+    let password=document.getElementById("password").value.trim();
+    let name=document.getElementById("name").value.trim();
+    let course=document.getElementById("course").value;
+    let year=document.getElementById("year").value;
+    let section=document.getElementById("section").value.trim();
+    let phone=document.getElementById("phone").value.trim();
+    let messageDiv=document.getElementById("message");
+
+    if(!username || !password || !name || !course || !year || !section || !phone){
+        messageDiv.style.display="block";
+        messageDiv.className="error";
+        messageDiv.innerText="Please fill all fields!";
+        return;
+    }
+
+    let users=JSON.parse(localStorage.getItem("users"))||[];
+    let students=JSON.parse(localStorage.getItem("students"))||[];
+
+    let userExists = users.some(u => u.username.toLowerCase()===username.toLowerCase());
+    let studentExists = students.some(s => 
+        s.name.toLowerCase()===name.toLowerCase() &&
+        s.course===course &&
+        s.year===year &&
+        s.section.toLowerCase()===section.toLowerCase()
+    );
+
+    if(userExists || studentExists){
+        messageDiv.style.display="block";
+        messageDiv.className="error";
+        messageDiv.innerText="❌ Student already registered!";
+        return;
+    }
+
+    users.push({username,password,role:"student"});
+    localStorage.setItem("users",JSON.stringify(users));
+
+    let id="STU"+Date.now();
+    students.push({id,name,course,year,section,phone,username});
+    localStorage.setItem("students",JSON.stringify(students));
+
+    messageDiv.style.display="block";
+    messageDiv.className="success";
+    messageDiv.innerText="✅ Student Registered Successfully! QR ID: "+id;
+
+    setTimeout(()=>{ window.location="index.html"; },2000);
+}
+
+function backToLogin(){
+    window.location="index.html";
+}
+</script>
+
+</body>
+</html>

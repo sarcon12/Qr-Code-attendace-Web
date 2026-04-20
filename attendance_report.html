@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Attendance Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+    font-family:Arial, sans-serif;
+    text-align:center;
+    background: linear-gradient(135deg,#a8edea,#fed6e3);
+    min-height:100vh;
+    padding:20px;
+    margin:0;
+    box-sizing:border-box;
+}
+body {
+    background-image: url('1.png');
+    background-size: cover; /* Makes image cover the whole area */
+    background-repeat: no-repeat; /* Prevents repeating */
+    background-position: center; /* Centers the image */
+}
+h2{
+    color:#333;
+}
+table{
+    margin:auto;
+    border-collapse:collapse;
+    width:90%;
+    max-width:700px;
+    background:white;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    table-layout:fixed;
+    word-wrap:break-word;
+}
+th,td{
+    border:1px solid #ccc;
+    padding:12px;
+    text-align:center;
+}
+th{
+    background:#4CAF50;
+    color:white;
+}
+button, select{
+    margin-top:10px;
+    padding:10px 20px;
+    border:none;
+    cursor:pointer;
+    border-radius:6px;
+    font-size:16px;
+}
+button{
+    background:#4CAF50;
+    color:white;
+}
+button:hover, select:hover{
+    background:#45a049;
+}
+.back-btn{
+    background:#f44336;
+    color:white;
+}
+.back-btn:hover{
+    background:#d32f2f;
+}
+.filter-container{
+    margin:20px auto;
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+}
+.filter-container select{
+    padding:10px;
+    border-radius:6px;
+    border:none;
+    cursor:pointer;
+}
+@media screen and (max-width:480px){
+    table th, table td{
+        padding:6px;
+        font-size:14px;
+    }
+    button, select{
+        padding:8px 12px;
+        font-size:14px;
+    }
+    .filter-container{
+        flex-direction:column;
+    }
+}
+</style>
+</head>
+<body onload="loadAttendance()">
+<h2>Attendance Report</h2>
+<div class="filter-container">
+    <select id="filterYear" onchange="showAttendance()">
+        <option value="">All Years</option>
+        <option value="1">1st Year</option>
+        <option value="2">2nd Year</option>
+        <option value="3">3rd Year</option>
+        <option value="4">4th Year</option>
+    </select>
+    <select id="filterSection" onchange="showAttendance()">
+        <option value="">All Sections</option>
+    </select>
+</div>
+<table id="table">
+<tr>
+<th>Student</th>
+<th>Year</th>
+<th>Section</th>
+<th>Date</th>
+<th>Time</th>
+</tr>
+</table>
+<button onclick="download()">Download CSV</button>
+<button class="back-btn" onclick="window.location='admin_dashboard.html'">⬅ Back</button>
+<script>
+function loadAttendance(){
+    let records=JSON.parse(localStorage.getItem("attendance"))||[];
+    populateSections(records);
+    showAttendance();
+}
+function populateSections(records){
+    let sectionSelect = document.getElementById("filterSection");
+    sectionSelect.innerHTML = '<option value="">All Sections</option>';
+    let sections = new Set();
+    records.forEach(r=>{sections.add(r.section);});
+    Array.from(sections).sort().forEach(sec=>{
+        sectionSelect.innerHTML += `<option value="${sec}">${sec}</option>`;
+    });
+}
+function showAttendance(){
+    let records=JSON.parse(localStorage.getItem("attendance"))||[];
+    let table=document.getElementById("table");
+    table.innerHTML="<tr><th>Student</th><th>Year</th><th>Section</th><th>Date</th><th>Time</th></tr>";
+    let filterYear = document.getElementById("filterYear").value;
+    let filterSection = document.getElementById("filterSection").value;
+    records.forEach(r=>{
+        if((filterYear==="" || r.year===filterYear) &&
+           (filterSection==="" || r.section===filterSection)){
+            let row=table.insertRow();
+            row.insertCell(0).innerHTML=r.student;
+            row.insertCell(1).innerHTML=r.year;
+            row.insertCell(2).innerHTML=r.section;
+            row.insertCell(3).innerHTML=r.date;
+            row.insertCell(4).innerHTML=r.time;
+        }
+    });
+}
+function download(){
+    let records=JSON.parse(localStorage.getItem("attendance"))||[];
+    let filterYear = document.getElementById("filterYear").value;
+    let filterSection = document.getElementById("filterSection").value;
+    let csv="Student,Year,Section,Date,Time\n";
+    records.forEach(r=>{
+        if((filterYear==="" || r.year===filterYear) &&
+           (filterSection==="" || r.section===filterSection)){
+            csv+=`${r.student},${r.year},${r.section},${r.date},${r.time}\n`;
+        }
+    });
+    let blob=new Blob([csv],{type:"text/csv"});
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="attendance_filtered.csv";
+    a.click();
+}
+</script>
+</body>
+</html>
